@@ -1,0 +1,178 @@
+Experiment 2: Temperature and Humidity Monitoring Using IoT Trainer Kit 
+Program: 
+#include <DHT.h> 
+#define DHTPIN 4 
+#define DHTTYPE DHT11 
+DHT dht(DHTPIN, DHTTYPE); 
+void setup() { 
+Serial.begin(115200); 
+dht.begin(); 
+} 
+void loop() { 
+float temperature = dht.readTemperature(); 
+float humidity = dht.readHumidity(); 
+if (isnan(temperature) || isnan(humidity)) { 
+Serial.println("Sensor reading failed!"); 
+} else { 
+Serial.print("Temperature: "); 
+Serial.print(temperature); 
+Serial.println(" °C"); 
+Serial.print("Humidity: "); 
+Serial.print(humidity); 
+Serial.println(" %"); 
+} 
+delay(2000); 
+}
+
+Experiment 3: Interfacing Light and Sound Sensors with ESP32 IoT Trainer Kit
+Arduino IDE Program 
+const int LDR_PIN = 34; 
+const int SOUND_PIN = 35; 
+const int LED_PIN = 2; 
+const int SOUND_THRESHOLD = 2000; 
+void setup() { 
+Serial.begin(115200); 
+pinMode(LDR_PIN, INPUT); 
+pinMode(SOUND_PIN, INPUT); 
+pinMode(LED_PIN, OUTPUT); 
+digitalWrite(LED_PIN, LOW); 
+} 
+void loop() { 
+int lightValue = analogRead(LDR_PIN); 
+int soundValue = analogRead(SOUND_PIN); 
+Serial.print("Light Level: "); 
+Serial.print(lightValue); 
+Serial.print(" | Sound Level: "); 
+Serial.println(soundValue); 
+if (soundValue > SOUND_THRESHOLD) { 
+digitalWrite(LED_PIN, HIGH); 
+Serial.println("Loud sound detected! LED ON"); 
+} else { 
+digitalWrite(LED_PIN, LOW); 
+} 
+delay(500);
+
+Experiment 4: Temperature-Based Fan Control Using LED and Relay Module
+#include <DHT.h> 
+#define DHT_PIN 4 
+#define DHT_TYPE DHT11 
+const int LED_PIN = 2; 
+const int RELAY_PIN = 5; 
+const float TEMP_THRESHOLD = 30.0; 
+DHT dht(DHT_PIN, DHT_TYPE); 
+void setup() { 
+Serial.begin(115200); 
+pinMode(LED_PIN, OUTPUT); 
+pinMode(RELAY_PIN, OUTPUT); 
+// Assumes an active-HIGH relay module. 
+digitalWrite(RELAY_PIN, LOW); 
+digitalWrite(LED_PIN, LOW); 
+dht.begin(); 
+} 
+void loop() { 
+float temperature = dht.readTemperature(); 
+if (isnan(temperature)) { 
+Serial.println("Failed to read DHT11 sensor"); 
+delay(2000); 
+return; 
+} 
+Serial.print("Temperature: "); 
+Serial.print(temperature); 
+Serial.println(" °C"); 
+if (temperature >= TEMP_THRESHOLD) { 
+digitalWrite(RELAY_PIN, HIGH); 
+digitalWrite(LED_PIN, HIGH); 
+Serial.println("Temperature high: Fan ON, LED ON"); 
+} else { 
+digitalWrite(RELAY_PIN, LOW); 
+digitalWrite(LED_PIN, LOW); 
+Serial.println("Temperature normal: Fan OFF, LED OFF"); 
+} 
+delay(2000); 
+}
+
+Experiment 5 : Basic Encryption and Decryption Using the IoT Trainer Kit
+#include <DHT.h> 
+#define DHTPIN 4 
+#define DHTTYPE DHT11 
+DHT dht(DHTPIN, DHTTYPE); 
+const byte secretKey = 'K'; 
+void setup() { 
+Serial.begin(115200); 
+dht.begin(); 
+Serial.println("IoT Data Encryption"); 
+} 
+void loop() { 
+delay(3000); 
+float temperature = dht.readTemperature(); 
+float humidity = dht.readHumidity(); 
+if (isnan(temperature) || isnan(humidity)) { 
+Serial.println("Sensor reading failed!"); 
+return; 
+} 
+String plaintext = "T:" + String(temperature, 1) + 
+"C,H:" + String(humidity, 0) + "%"; 
+Serial.print("Original Data: "); 
+Serial.println(plaintext); 
+int len = plaintext.length(); 
+byte ciphertext[len]; 
+// Encryption using XOR 
+for (int i = 0; i < len; i++) { 
+ciphertext[i] = (byte)plaintext[i] ^ secretKey; 
+} 
+Serial.print("Encrypted Data: "); 
+for (int i = 0; i < len; i++) { 
+if (ciphertext[i] < 16) Serial.print("0"); 
+Serial.print(ciphertext[i], HEX); 
+Serial.print(" "); 
+} 
+Serial.println(); 
+// Decryption using the same key 
+String decrypted = ""; 
+for (int i = 0; i < len; i++) { 
+decrypted += (char)(ciphertext[i] ^ secretKey); 
+} 
+Serial.print("Decrypted Data: "); 
+Serial.println(decrypted); 
+Serial.println("----------------------"); 
+}
+
+Experiment 6: MQTT Communication Using ESP32  
+#include "AdafruitIO_WiFi.h" 
+#include "DHT.h" 
+#define DHTPIN 4 
+#define LED 2 
+#define DHTTYPE DHT11 
+#define WIFI_SSID "YOUR_WIFI" 
+#define WIFI_PASS "YOUR_PASSWORD" 
+#define IO_USERNAME "YOUR_USERNAME" 
+#define IO_KEY "YOUR_AIO_KEY" 
+DHT dht(DHTPIN, DHTTYPE); 
+AdafruitIO_WiFi io(IO_USERNAME, IO_KEY, 
+WIFI_SSID, WIFI_PASS); 
+AdafruitIO_Feed *temp = io.feed("temperature"); 
+AdafruitIO_Feed *led = io.feed("led-control"); 
+void messageHandler(AdafruitIO_Data *data) { 
+String cmd = data->toString(); 
+cmd.toUpperCase(); 
+digitalWrite(LED, cmd == "ON" ? HIGH : LOW); 
+} 
+void setup() { 
+Serial.begin(115200); 
+pinMode(LED, OUTPUT); 
+dht.begin(); 
+led->onMessage(messageHandler); 
+io.connect(); 
+while (io.status() < AIO_CONNECTED) 
+io.run(); 
+led->get(); 
+} 
+void loop() { 
+io.run(); 
+float t = dht.readTemperature(); 
+if (!isnan(t)) { 
+temp->save(t); 
+Serial.println(t); 
+} 
+delay(5000); 
+}
